@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Jogos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">API REST + MySQL</p>
+        <h1>Gestor de jogos</h1>
+        <p class="lead">Interface simples para listar, criar, editar e apagar registos.</p>
+      </div>
+      <div class="hero-note">
+        <span>Frontend em HTML</span>
+        <strong>Separado por ficheiros</strong>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel-form">
+        <div class="panel-head">
+          <h2>Formulario</h2>
+          <p>Use este formulario para criar ou atualizar um jogo.</p>
+        </div>
+
+        <form id="game-form" class="form-grid">
+          <input type="hidden" id="game-id">
+
+          <label>
+            <span>Nome</span>
+            <input id="nome" type="text" placeholder="Ex: Forza Horizon 6" required>
+          </label>
+
+          <label>
+            <span>Quantidade</span>
+            <input id="quantidade" type="number" min="0" placeholder="Ex: 10" required>
+          </label>
+
+          <label>
+            <span>Preco</span>
+            <input id="preco" type="number" min="0" step="0.01" placeholder="Ex: 59.99" required>
+          </label>
+
+          <label>
+            <span>Categoria</span>
+            <select id="id_categoria" required></select>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="save-button">Guardar</button>
+            <button type="button" class="btn btn-secondary" id="cancel-button">Cancelar</button>
+          </div>
+        </form>
+
+        <p class="status" id="status"></p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head panel-head-row">
+          <div>
+            <h2>Filtros</h2>
+            <p>Carregados da API de categorias.</p>
+          </div>
+          <button class="btn btn-ghost" id="all-button" type="button">Ver todos</button>
+        </div>
+
+        <div class="chips" id="category-chips"></div>
+      </section>
+
+      <section class="panel panel-wide">
+        <div class="panel-head panel-head-row">
+          <div>
+            <h2 id="games-title">Jogos</h2>
+            <p id="games-subtitle">Dados obtidos da API.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Quantidade</th>
+                <th>Preco</th>
+                <th>Categoria</th>
+                <th>Acoes</th>
+              </tr>
+            </thead>
+            <tbody id="games-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel panel-wide">
+        <div class="panel-head">
+          <h2>Vista com JOIN</h2>
+          <p>Resumo curto vindo de <code>/api/jogos-categorias</code>.</p>
+        </div>
+        <div class="joined-list" id="joined-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>

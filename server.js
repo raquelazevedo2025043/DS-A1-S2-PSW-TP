@@ -1,5 +1,6 @@
 //Importar o Express
 const express = require("express");
+const path = require("path");
 
 // Importar a ligação à base de dados
 const pool = require("./db");
@@ -12,13 +13,25 @@ const PORT = 3008;
 
 // Middleware para permitir ler JSON enviado no corpo dos pedidos
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 // Rota inicial
 app.get("/", (req, res) => {
-    res.json({
-        mensagem: "Rota inicial funcional"
-    })
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 })
+
+// --- CATEGORIAS ---
+app.get("/api/categorias", async (req, res) => {
+    try {
+        const [categorias] = await pool.query("SELECT * FROM categorias ORDER BY nome");
+
+        res.json(categorias);
+    } catch (erro) {
+        res.status(500).json({
+            erro: "Erro ao obter categorias da base de dados"
+        });
+    }
+});
 
 
 // --- JOGOS ---
@@ -110,7 +123,7 @@ app.post("/api/jogos", async (req, res) => {
 app.put("/api/jogos/:id", async (req, res) => {
     try {
         const id = Number(req.params.id);
-        const { nome, quantidade, preco } = req.body;
+        const { nome, quantidade, preco, id_categoria } = req.body;
 
         // Validar ID
         if (isNaN(id)) {
@@ -120,18 +133,19 @@ app.put("/api/jogos/:id", async (req, res) => {
         }
 
         // Validações para nome, preço e quantidade
-        if (!nome || preco === undefined || preco === "" || isNaN(Number(preco)) || Number(preco <= 0)
-            || quantidade === undefined || quantidade === "" || isNaN(Number(quantidade)) || Number(quantidade <= 0)
+        if (!nome || preco === undefined || preco === "" || isNaN(Number(preco)) || Number(preco) <= 0
+            || quantidade === undefined || quantidade === "" || isNaN(Number(quantidade)) || Number(quantidade) <= 0
+            || id_categoria === undefined || id_categoria === "" || isNaN(Number(id_categoria)) || Number(id_categoria) <= 0
         ) {
             return res.status(400).json({
-                erro: "O nome é obrigatório, preço e a quantidade devem ser um número superior a zero"
+                erro: "O nome é obrigatório, preço e a quantidade devem ser um número superior a zero, e a categoria deve ser válida"
             })
         }
 
         // Atualizar o jogo na base de dados
         const [resultado] = await pool.query(
-            "UPDATE jogos SET nome = ?, quantidade = ?, preco = ? WHERE id = ?",
-            [nome, Number(quantidade), Number(preco), id]
+            "UPDATE jogos SET nome = ?, quantidade = ?, preco = ?, id_categoria = ? WHERE id = ?",
+            [nome, Number(quantidade), Number(preco), Number(id_categoria), id]
         )
 
         if (resultado.affectedRows === 0) {
@@ -146,7 +160,8 @@ app.put("/api/jogos/:id", async (req, res) => {
                 id: id,
                 nome: nome,
                 quantidade: Number(quantidade),
-                preco: Number(preco)
+                preco: Number(preco),
+                id_categoria: Number(id_categoria)
             }
         })
 
@@ -202,6 +217,7 @@ app.get("/api/jogos-categorias", async (req, res) => {
                 jogos.nome,
                 jogos.quantidade,
                 jogos.preco,
+                jogos.id_categoria,
                 categorias.nome AS categoria
             FROM jogos
             INNER JOIN categorias
@@ -231,6 +247,7 @@ app.get("/api/categorias/:id/jogos", async (req, res) => {
                 jogos.nome,
                 jogos.quantidade,
                 jogos.preco,
+                jogos.id_categoria,
                 categorias.nome AS categoria
             FROM jogos
             INNER JOIN categorias
