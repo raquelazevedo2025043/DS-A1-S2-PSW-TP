@@ -218,6 +218,28 @@ select:focus {
   gap: 10px;
 }
 
+.inline-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.inline-form-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.inline-form-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-form-controls input {
+  flex: 1 1 220px;
+}
+
 .chip {
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -311,5 +333,9 @@ code {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inline-form-controls {
+    flex-direction: column;
   }
 }

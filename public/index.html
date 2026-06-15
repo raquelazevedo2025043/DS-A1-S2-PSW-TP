@@ -13,13 +13,8 @@
   <div class="shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">API REST + MySQL</p>
         <h1>Gestor de jogos</h1>
         <p class="lead">Interface simples para listar, criar, editar e apagar registos.</p>
-      </div>
-      <div class="hero-note">
-        <span>Frontend em HTML</span>
-        <strong>Separado por ficheiros</strong>
       </div>
     </header>
 
@@ -70,6 +65,15 @@
           </div>
           <button class="btn btn-ghost" id="all-button" type="button">Ver todos</button>
         </div>
+
+        <form id="category-form" class="inline-form">
+          <label class="inline-form-label" for="category-name">Nova categoria</label>
+          <div class="inline-form-controls">
+            <input id="category-name" type="text" placeholder="Ex: Aventura" required>
+            <button type="submit" class="btn btn-primary">Criar categoria</button>
+          </div>
+          <p class="status" id="category-status"></p>
+        </form>
 
         <div class="chips" id="category-chips"></div>
       </section>
