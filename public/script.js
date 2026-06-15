@@ -21,6 +21,9 @@ const categoriaSelect = document.querySelector("#id_categoria");
 const saveButton = document.querySelector("#save-button");
 const cancelButton = document.querySelector("#cancel-button");
 const statusText = document.querySelector("#status");
+const categoryForm = document.querySelector("#category-form");
+const categoryNameInput = document.querySelector("#category-name");
+const categoryStatusText = document.querySelector("#category-status");
 const chips = document.querySelector("#category-chips");
 const gamesTable = document.querySelector("#games-table");
 const gamesTitle = document.querySelector("#games-title");
@@ -33,6 +36,11 @@ function setStatus(message, isError = false) {
   statusText.style.color = isError ? "#c93838" : "var(--muted)";
 }
 
+function setCategoryStatus(message, isError = false) {
+  categoryStatusText.textContent = message;
+  categoryStatusText.style.color = isError ? "#c93838" : "var(--muted)";
+}
+
 function formatPrice(value) {
   return Number(value).toFixed(2) + " EUR";
 }
@@ -43,9 +51,15 @@ function getCategoriaNome(idCategoria) {
 }
 
 function renderCategoriaSelect() {
+  const selectedValue = categoriaSelect.value;
+
   categoriaSelect.innerHTML = state.categorias
     .map((categoria) => `<option value="${categoria.id}">${categoria.nome}</option>`)
     .join("");
+
+  if (selectedValue && state.categorias.some((categoria) => String(categoria.id) === selectedValue)) {
+    categoriaSelect.value = selectedValue;
+  }
 }
 
 function renderChips() {
@@ -235,6 +249,43 @@ form.addEventListener("submit", async (event) => {
     await refreshCurrentView();
   } catch (error) {
     setStatus(error.message, true);
+  }
+});
+
+categoryForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const nome = categoryNameInput.value.trim();
+
+  if (!nome) {
+    setCategoryStatus("Escreve o nome da categoria.", true);
+    return;
+  }
+
+  try {
+    const response = await fetch(api.categorias, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.erro || "Nao foi possivel criar a categoria.");
+    }
+
+    categoryForm.reset();
+    setCategoryStatus("Categoria criada com sucesso.");
+
+    await loadCategorias();
+    categoriaSelect.value = String(data.id);
+
+    if (state.filtroAtual.tipo === "category") {
+      await loadCategoryView(state.filtroAtual.id, state.filtroAtual.nome.replace("Jogos: ", ""));
+    }
+  } catch (error) {
+    setCategoryStatus(error.message, true);
   }
 });
 

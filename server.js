@@ -33,6 +33,43 @@ app.get("/api/categorias", async (req, res) => {
     }
 });
 
+app.post("/api/categorias", async (req, res) => {
+    try {
+        const nome = String(req.body.nome || "").trim();
+
+        if (!nome) {
+            return res.status(400).json({
+                erro: "O nome da categoria é obrigatório"
+            });
+        }
+
+        const [categoriaExistente] = await pool.query(
+            "SELECT id FROM categorias WHERE LOWER(nome) = LOWER(?) LIMIT 1",
+            [nome]
+        );
+
+        if (categoriaExistente.length > 0) {
+            return res.status(400).json({
+                erro: "Já existe uma categoria com esse nome"
+            });
+        }
+
+        const [resultado] = await pool.query(
+            "INSERT INTO categorias (nome) VALUES (?)",
+            [nome]
+        );
+
+        res.status(201).json({
+            id: resultado.insertId,
+            nome
+        });
+    } catch (erro) {
+        res.status(500).json({
+            erro: "Erro ao criar categoria"
+        });
+    }
+});
+
 
 // --- JOGOS ---
 //GET - Listar todos os jogos
