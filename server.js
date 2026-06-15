@@ -314,5 +314,5 @@ app.use((req, res) => {
 
 // Iniciar o servidor
 app.listen(PORT, () => {
-    console.log(`Servior a correr em http://localhost:${PORT}`);
+    console.log(`Servidor a correr em http://localhost:${PORT}`);
 });
