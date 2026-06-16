@@ -1,5 +1,6 @@
 //Importar o Express
 const express = require("express");
+const path = require("path");
 
 // Importar a ligação à base de dados
 const pool = require("./db");
@@ -13,11 +14,12 @@ const PORT = 3008;
 // Middleware para permitir ler JSON enviado no corpo dos pedidos
 app.use(express.json());
 
+// Servir ficheiros estaticos do frontend
+app.use(express.static(path.join(__dirname, "public")));
+
 // Rota inicial
 app.get("/", (req, res) => {
-    res.json({
-        mensagem: "Rota inicial funcional"
-    })
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 })
 
 
