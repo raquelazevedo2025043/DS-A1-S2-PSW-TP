@@ -68,14 +68,36 @@
 
         <form id="category-form" class="inline-form">
           <label class="inline-form-label" for="category-name">Nova categoria</label>
+          <input type="hidden" id="category-id">
           <div class="inline-form-controls">
             <input id="category-name" type="text" placeholder="Ex: Aventura" required>
-            <button type="submit" class="btn btn-primary">Criar categoria</button>
+            <button type="submit" class="btn btn-primary" id="category-save-button">Guardar categoria</button>
+            <button type="button" class="btn btn-secondary" id="category-cancel-button">Cancelar</button>
           </div>
           <p class="status" id="category-status"></p>
         </form>
 
         <div class="chips" id="category-chips"></div>
+      </section>
+
+      <section class="panel panel-wide">
+        <div class="panel-head">
+          <h2>Categorias</h2>
+          <p>Gestao rapida de categorias.</p>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Acoes</th>
+              </tr>
+            </thead>
+            <tbody id="categories-table"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="panel panel-wide">

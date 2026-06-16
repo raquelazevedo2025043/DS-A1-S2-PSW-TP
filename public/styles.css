@@ -240,6 +240,10 @@ select:focus {
   flex: 1 1 220px;
 }
 
+.inline-form-controls .btn {
+  white-space: nowrap;
+}
+
 .chip {
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -337,5 +341,9 @@ code {
 
   .inline-form-controls {
     flex-direction: column;
+  }
+
+  .inline-form-controls .btn {
+    width: 100%;
   }
 }

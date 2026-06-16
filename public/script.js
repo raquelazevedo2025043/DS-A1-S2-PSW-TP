@@ -1,8 +1,12 @@
+const API_BASE = window.location.protocol === "file:" ? "http://localhost:3008" : "";
+
 const api = {
-  categorias: "/api/categorias",
-  jogos: "/api/jogos",
-  jogosComCategoria: "/api/jogos-categorias",
-  jogosDaCategoria: (id) => `/api/categorias/${id}/jogos`
+  categorias: `${API_BASE}/api/categorias`,
+  categoria: (id) => `${API_BASE}/api/categorias/${id}`,
+  jogos: `${API_BASE}/api/jogos`,
+  jogo: (id) => `${API_BASE}/api/jogos/${id}`,
+  jogosComCategoria: `${API_BASE}/api/jogos-categorias`,
+  jogosDaCategoria: (id) => `${API_BASE}/api/categorias/${id}/jogos`
 };
 
 const state = {
@@ -21,9 +25,15 @@ const categoriaSelect = document.querySelector("#id_categoria");
 const saveButton = document.querySelector("#save-button");
 const cancelButton = document.querySelector("#cancel-button");
 const statusText = document.querySelector("#status");
+
 const categoryForm = document.querySelector("#category-form");
+const categoryIdInput = document.querySelector("#category-id");
 const categoryNameInput = document.querySelector("#category-name");
+const categorySaveButton = document.querySelector("#category-save-button");
+const categoryCancelButton = document.querySelector("#category-cancel-button");
 const categoryStatusText = document.querySelector("#category-status");
+const categoriesTable = document.querySelector("#categories-table");
+
 const chips = document.querySelector("#category-chips");
 const gamesTable = document.querySelector("#games-table");
 const gamesTitle = document.querySelector("#games-title");
@@ -53,6 +63,11 @@ function getCategoriaNome(idCategoria) {
 function renderCategoriaSelect() {
   const selectedValue = categoriaSelect.value;
 
+  if (!state.categorias.length) {
+    categoriaSelect.innerHTML = '<option value="">Sem categorias</option>';
+    return;
+  }
+
   categoriaSelect.innerHTML = state.categorias
     .map((categoria) => `<option value="${categoria.id}">${categoria.nome}</option>`)
     .join("");
@@ -60,6 +75,28 @@ function renderCategoriaSelect() {
   if (selectedValue && state.categorias.some((categoria) => String(categoria.id) === selectedValue)) {
     categoriaSelect.value = selectedValue;
   }
+}
+
+function renderCategoriesTable() {
+  if (!state.categorias.length) {
+    categoriesTable.innerHTML = '<tr><td class="empty" colspan="3">Sem categorias.</td></tr>';
+    return;
+  }
+
+  categoriesTable.innerHTML = state.categorias
+    .map((categoria) => `
+      <tr>
+        <td>${categoria.id}</td>
+        <td>${categoria.nome}</td>
+        <td>
+          <div class="row-actions">
+            <button type="button" class="btn btn-secondary" data-category-edit-id="${categoria.id}">Editar</button>
+            <button type="button" class="btn btn-danger" data-category-delete-id="${categoria.id}">Eliminar</button>
+          </div>
+        </td>
+      </tr>
+    `)
+    .join("");
 }
 
 function renderChips() {
@@ -82,7 +119,7 @@ function renderGamesTable(games) {
   gamesSubtitle.textContent = `${games.length} registo(s) mostrados.`;
 
   if (!games.length) {
-    gamesTable.innerHTML = `<tr><td class="empty" colspan="5">Sem registos para mostrar.</td></tr>`;
+    gamesTable.innerHTML = '<tr><td class="empty" colspan="5">Sem registos para mostrar.</td></tr>';
     return;
   }
 
@@ -106,7 +143,7 @@ function renderGamesTable(games) {
 
 function renderJoinedList(items) {
   if (!items.length) {
-    joinedList.innerHTML = `<div class="empty">Sem dados.</div>`;
+    joinedList.innerHTML = '<div class="empty">Sem dados.</div>';
     return;
   }
 
@@ -121,6 +158,50 @@ function renderJoinedList(items) {
     .join("");
 }
 
+function resetGameForm() {
+  form.reset();
+  gameIdInput.value = "";
+  saveButton.textContent = "Guardar";
+}
+
+function resetCategoryForm() {
+  categoryForm.reset();
+  categoryIdInput.value = "";
+  categorySaveButton.textContent = "Guardar categoria";
+}
+
+function fillGameForm(gameId) {
+  const game = state.jogosVisiveis.find((item) => Number(item.id) === Number(gameId))
+    || state.jogos.find((item) => Number(item.id) === Number(gameId));
+
+  if (!game) {
+    setStatus("Nao foi possivel localizar o jogo.", true);
+    return;
+  }
+
+  gameIdInput.value = game.id;
+  nomeInput.value = game.nome;
+  quantidadeInput.value = game.quantidade;
+  precoInput.value = game.preco;
+  categoriaSelect.value = game.id_categoria;
+  saveButton.textContent = "Atualizar";
+  setStatus(`A editar: ${game.nome}`);
+}
+
+function fillCategoryForm(categoryId) {
+  const category = state.categorias.find((item) => Number(item.id) === Number(categoryId));
+
+  if (!category) {
+    setCategoryStatus("Nao foi possivel localizar a categoria.", true);
+    return;
+  }
+
+  categoryIdInput.value = String(category.id);
+  categoryNameInput.value = category.nome;
+  categorySaveButton.textContent = "Atualizar categoria";
+  setCategoryStatus(`A editar categoria: ${category.nome}`);
+}
+
 async function loadCategorias() {
   const response = await fetch(api.categorias);
   if (!response.ok) {
@@ -130,6 +211,7 @@ async function loadCategorias() {
   state.categorias = await response.json();
   renderCategoriaSelect();
   renderChips();
+  renderCategoriesTable();
 }
 
 async function loadJogos() {
@@ -165,8 +247,9 @@ async function loadAllView() {
 async function loadCategoryView(id, nome) {
   const response = await fetch(api.jogosDaCategoria(id));
   if (!response.ok) {
+    state.filtroAtual = { tipo: "category", id: Number(id), nome: `Jogos: ${nome}` };
+    renderChips();
     renderGamesTable([]);
-    setStatus("Nao existem jogos nessa categoria.");
     return;
   }
 
@@ -176,35 +259,17 @@ async function loadCategoryView(id, nome) {
   renderGamesTable(items);
 }
 
-function resetForm() {
-  form.reset();
-  gameIdInput.value = "";
-  saveButton.textContent = "Guardar";
-}
-
-function fillForm(gameId) {
-  const game = state.jogosVisiveis.find((item) => Number(item.id) === Number(gameId))
-    || state.jogos.find((item) => Number(item.id) === Number(gameId));
-
-  if (!game) {
-    setStatus("Nao foi possivel localizar o jogo.", true);
-    return;
-  }
-
-  gameIdInput.value = game.id;
-  nomeInput.value = game.nome;
-  quantidadeInput.value = game.quantidade;
-  precoInput.value = game.preco;
-  categoriaSelect.value = game.id_categoria;
-  saveButton.textContent = "Atualizar";
-  setStatus(`A editar: ${game.nome}`);
-}
-
-async function refreshCurrentView() {
+async function refreshAllData() {
+  await loadCategorias();
   await loadJogos();
 
   if (state.filtroAtual.tipo === "category") {
-    await loadCategoryView(state.filtroAtual.id, state.filtroAtual.nome.replace("Jogos: ", ""));
+    const category = state.categorias.find((item) => Number(item.id) === Number(state.filtroAtual.id));
+    if (category) {
+      await loadCategoryView(category.id, category.nome);
+    } else {
+      await loadAllView();
+    }
   } else {
     await loadAllView();
   }
@@ -229,7 +294,7 @@ form.addEventListener("submit", async (event) => {
 
   const gameId = gameIdInput.value;
   const method = gameId ? "PUT" : "POST";
-  const url = gameId ? `${api.jogos}/${gameId}` : api.jogos;
+  const url = gameId ? api.jogo(gameId) : api.jogos;
 
   try {
     const response = await fetch(url, {
@@ -244,9 +309,9 @@ form.addEventListener("submit", async (event) => {
       throw new Error(data.erro || "Operacao falhou.");
     }
 
-    resetForm();
+    resetGameForm();
     setStatus(method === "POST" ? "Jogo criado com sucesso." : "Jogo atualizado com sucesso.");
-    await refreshCurrentView();
+    await refreshAllData();
   } catch (error) {
     setStatus(error.message, true);
   }
@@ -256,15 +321,19 @@ categoryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const nome = categoryNameInput.value.trim();
+  const categoryId = categoryIdInput.value;
 
   if (!nome) {
     setCategoryStatus("Escreve o nome da categoria.", true);
     return;
   }
 
+  const method = categoryId ? "PUT" : "POST";
+  const url = categoryId ? api.categoria(categoryId) : api.categorias;
+
   try {
-    const response = await fetch(api.categorias, {
-      method: "POST",
+    const response = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome })
     });
@@ -272,26 +341,25 @@ categoryForm.addEventListener("submit", async (event) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.erro || "Nao foi possivel criar a categoria.");
+      throw new Error(data.erro || "Nao foi possivel guardar a categoria.");
     }
 
-    categoryForm.reset();
-    setCategoryStatus("Categoria criada com sucesso.");
-
-    await loadCategorias();
-    categoriaSelect.value = String(data.id);
-
-    if (state.filtroAtual.tipo === "category") {
-      await loadCategoryView(state.filtroAtual.id, state.filtroAtual.nome.replace("Jogos: ", ""));
-    }
+    resetCategoryForm();
+    setCategoryStatus(method === "POST" ? "Categoria criada com sucesso." : "Categoria atualizada com sucesso.");
+    await refreshAllData();
   } catch (error) {
     setCategoryStatus(error.message, true);
   }
 });
 
 cancelButton.addEventListener("click", () => {
-  resetForm();
+  resetGameForm();
   setStatus("Edicao cancelada.");
+});
+
+categoryCancelButton.addEventListener("click", () => {
+  resetCategoryForm();
+  setCategoryStatus("Edicao de categoria cancelada.");
 });
 
 allButton.addEventListener("click", async () => {
@@ -319,31 +387,69 @@ gamesTable.addEventListener("click", async (event) => {
   const deleteButton = event.target.closest("[data-delete-id]");
 
   if (editButton) {
-    fillForm(editButton.dataset.editId);
+    fillGameForm(editButton.dataset.editId);
     return;
   }
 
   if (deleteButton) {
     const gameId = deleteButton.dataset.deleteId;
-    const game = state.jogos.find((item) => Number(item.id) === Number(gameId)) || state.jogosVisiveis.find((item) => Number(item.id) === Number(gameId));
+    const game = state.jogos.find((item) => Number(item.id) === Number(gameId))
+      || state.jogosVisiveis.find((item) => Number(item.id) === Number(gameId));
 
     if (!window.confirm(`Eliminar ${game ? game.nome : "este jogo"}?`)) {
       return;
     }
 
     try {
-      const response = await fetch(`${api.jogos}/${gameId}`, { method: "DELETE" });
+      const response = await fetch(api.jogo(gameId), { method: "DELETE" });
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.erro || "Nao foi possivel eliminar.");
       }
 
-      resetForm();
+      resetGameForm();
       setStatus("Jogo eliminado com sucesso.");
-      await refreshCurrentView();
+      await refreshAllData();
     } catch (error) {
       setStatus(error.message, true);
+    }
+  }
+});
+
+categoriesTable.addEventListener("click", async (event) => {
+  const editButton = event.target.closest("[data-category-edit-id]");
+  const deleteButton = event.target.closest("[data-category-delete-id]");
+
+  if (editButton) {
+    fillCategoryForm(editButton.dataset.categoryEditId);
+    return;
+  }
+
+  if (deleteButton) {
+    const categoryId = deleteButton.dataset.categoryDeleteId;
+    const category = state.categorias.find((item) => Number(item.id) === Number(categoryId));
+
+    if (!window.confirm(`Eliminar categoria ${category ? category.nome : "selecionada"}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(api.categoria(categoryId), { method: "DELETE" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.erro || "Nao foi possivel eliminar a categoria.");
+      }
+
+      if (Number(categoryId) === Number(categoryIdInput.value)) {
+        resetCategoryForm();
+      }
+
+      setCategoryStatus("Categoria eliminada com sucesso.");
+      await refreshAllData();
+    } catch (error) {
+      setCategoryStatus(error.message, true);
     }
   }
 });
@@ -351,10 +457,7 @@ gamesTable.addEventListener("click", async (event) => {
 async function init() {
   try {
     setStatus("A carregar dados...");
-    await loadCategorias();
-    await loadJogos();
-    await loadAllView();
-    await loadJoinedPreview();
+    await refreshAllData();
     setStatus("Pronto.");
   } catch (error) {
     setStatus(error.message, true);
